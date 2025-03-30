@@ -36,17 +36,6 @@ The platform utilizes PostgreSQL for database management and Redis for caching, 
 - **Files**:
   - `index.html`: Main HTML file for the static frontend.
 
-## Lifehacks
-
-**Use ChatGPT everywhere**
-
-**But don't ask it to write the code or solutions for you.**
-
-Initially, use it to understand the diagram, all the interconnections on it, and why everything is arranged this way.
-
-Next, use it when taking courses to find the information you need for the project's implementation. Use it here to deepen your understanding, create more examples and analogies. Break concepts into the simplest levels of abstraction and show maximum creativity when working with it.
-
-Refer back to the course we took initially (about ChatGPT), recall the methods and strategies of prompts, and use them. Your main task is not just to implement the project but to learn how to break down new information into the simplest pieces with ChatGPT and build understanding as quickly as possible.
 
 ## Deployment
 

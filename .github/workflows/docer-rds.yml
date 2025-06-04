@@ -1,0 +1,44 @@
+name: RDS Deployment Workflow
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - 'backend_redis/**'
+      - '.github/workflows/docker_redis.yml'
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: eu-north-1
+          role-to-assume: arn:aws:iam::149591431224:role/role--is
+          role-session-name: GitHubActionsSession
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build Docker image
+        run: |
+          docker build -t backend-rds ./backend_rds
+
+      - name: Tag Docker image
+        run: |
+          docker tag backend-rds:latest 149591431224.dkr.ecr.eu-north-1.amazonaws.com/backend-rds:latest
+
+      - name: Push Docker image to ECR
+        run: |
+          docker push 149591431224.dkr.ecr.eu-north-1.amazonaws.com/backend-rds:latest

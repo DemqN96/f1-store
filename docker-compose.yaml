@@ -1,0 +1,40 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: f1db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+
+  backend-rds:
+    build: ./backend_rds
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+
+  backend-redis:
+    build: ./backend_redis
+    ports:
+      - "8001:8001"
+    depends_on:
+      - redis
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "8080:80"
+
+volumes:
+  pg_data:

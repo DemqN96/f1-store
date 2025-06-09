@@ -4,14 +4,14 @@ on:
   push:
     branches:
       - main
-    paths:
-      - 'backend_rds/**'
+#     paths:
+#       - 'backend_rds/**'
   
-  workflow_dispatch:
+#   workflow_dispatch:
 
-defaults:  #для того що б ми змінили робочу дерикторію 
-  run:
-     working-directory: ./backend_rds
+# defaults:  #для того що б ми змінили робочу дерикторію 
+#   run:
+#      working-directory: ./backend_rds
  
 permissions:
   id-token: write
@@ -25,16 +25,16 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js #Цей фрагмент — частина GitHub Actions workflow (.github/workflows/назва.yml), яка описує CI/CD-процес: що робити автоматично після певної події (наприклад, пушу в репозиторій).
-        uses: actions/setup-node@v4
-        with: 
-          node-version: 18
+      # - name: Setup Node.js #Цей фрагмент — частина GitHub Actions workflow (.github/workflows/назва.yml), яка описує CI/CD-процес: що робити автоматично після певної події (наприклад, пушу в репозиторій).
+      #   uses: actions/setup-node@v4
+      #   with: 
+      #     node-version: 18
 
-      - name: Install Dependenices # залежності 
-        run: npm install
+      # - name: Install Dependenices # залежності 
+      #   run: npm install
 
-      - name: Build the React Static App #Це опис кроку в CI/CD. Він просто називає, що саме виконується (для зручності в логах).
-        run: npm run build
+      # - name: Build the React Static App #Це опис кроку в CI/CD. Він просто називає, що саме виконується (для зручності в логах).
+      #   run: npm run build
       
 
       - name: Configure AWS Credentials  # налаштовується CLI для взамодії з AWS servis
@@ -53,32 +53,31 @@ jobs:
           docker build -t backend-rds ./backend_rds  
           docker tag backend-rds:latest ${{ secrets.AWS_ACCAUNT_ID }}.dkr.ecr.eu-north-1.amazonaws.com/backend-rds:$IMAGE_TAG
           docker push ${{ secrets.AWS_ACCAUNT_ID }}.dkr.ecr.eu-north-1.amazonaws.com/backend-rds:$IMAGE_TAG=
-          - name: Deploy to EC 2 # підключення до іс2 за різними  тегами які згенерує 
+
+        env:
       
-          env:
-        
-            IMAGE_TAG: ${{ github.sha }}
-            CONTAINER_NAME: backend_rds
-  
-          run: |
-            echo "${{ secrets.SSH_PRIVATE_KEY_PROD }}" > /tmp/ssh_key
-            chmod 600 /tmp/ssh_key
-            ssh -o StrictHostKeyChecking=no -i /tmp/ssh_key ec2-user@${{ secrets.EC2_HOST_PROD }} << EOF
-            IMAGE_TAG=${{ github.sha }}
-              aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
-              docker pull ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/backend_rds:$IMAGE_TAG
-              sed -i '/backend_rds:/,/image:/s|image: .*|image: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/backend_rds:$IMAGE_TAG|g' docker-compose.yml
-              if [ "$(docker ps -q -f name=$CONTAINER_NAME)" ]; then
-              echo "Контейнер $CONTAINER_NAME працює. Зупиняємо..."
-              # Зупиняємо контейнер
-              docker compose stop $CONTAINER_NAME  echo "Не вдалося зупинити контейнер $CONTAINER_NAME"
-  
-              else
-                  echo "Контейнер $CONTAINER_NAME не запущений. Запускаємо..."
-  
-                  # Запускаємо контейнер
-                  docker compose up -d $CONTAINER_NAME  echo "Не вдалося запустити контейнер $CONTAINER_NAME"
-              fi
-            EOF
-            rm /tmp/ssh_key
-        
+          IMAGE_TAG: ${{ github.sha }}
+          CONTAINER_NAME: backend_rds
+
+      - run: |
+          echo "${{ secrets.SSH_PRIVATE_KEY_PROD }}" > /tmp/ssh_key
+          chmod 600 /tmp/ssh_key
+          ssh -o StrictHostKeyChecking=no -i /tmp/ssh_key ec2-user@${{ secrets.EC2_HOST_PROD }} << EOF
+          IMAGE_TAG=${{ github.sha }}
+            aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
+            docker pull ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/backend_rds:$IMAGE_TAG
+            sed -i '/backend_rds:/,/image:/s|image: .*|image: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/backend_rds:$IMAGE_TAG|g' docker-compose.yml
+            if [ "$(docker ps -q -f name=$CONTAINER_NAME)" ]; then
+            echo "Контейнер $CONTAINER_NAME працює. Зупиняємо..."
+            # Зупиняємо контейнер
+            docker compose stop $CONTAINER_NAME  echo "Не вдалося зупинити контейнер $CONTAINER_NAME"
+
+            else
+                echo "Контейнер $CONTAINER_NAME не запущений. Запускаємо..."
+
+                # Запускаємо контейнер
+                docker compose up -d $CONTAINER_NAME  echo "Не вдалося запустити контейнер $CONTAINER_NAME"
+            fi
+          EOF
+          rm /tmp/ssh_key
+      

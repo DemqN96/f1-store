@@ -4,14 +4,14 @@ on:
   push:
     branches:
       - main
-    paths:
-      - 'backend_redis/**'
+#     paths:
+#       - 'backend_redis/**'
   
-  workflow_dispatch:
+#   workflow_dispatch:
 
-defaults:  #для того що б ми змінили робочу дерикторію 
-  run:
-     working-directory: ./backend_redis
+# defaults:  #для того що б ми змінили робочу дерикторію 
+#   run:
+#      working-directory: ./backend_redis
  
 permissions:
   id-token: write

@@ -4,11 +4,15 @@ on:
   push:
     branches:
       - main
-    paths-ignore:
-      - 'backend_redis/**'
-      - '.github/workflows/docker_redis.yml'
+    paths:
+      - 'backend_rds/**'
+  
   workflow_dispatch:
 
+defaults:  #для того що б ми змінили робочу дерикторію 
+  run:
+     working-directory: ./backend_rds
+ 
 permissions:
   id-token: write
   contents: read
@@ -21,24 +25,31 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
+      - name: Setup Node.js #Цей фрагмент — частина GitHub Actions workflow (.github/workflows/назва.yml), яка описує CI/CD-процес: що робити автоматично після певної події (наприклад, пушу в репозиторій).
+        uses: actions/setup-node@v4
+        with: 
+          node-version: 18
+
+      - name: Install Dependenices # залежності 
+        run: npm install
+
+      - name: Build the React Static App #Це опис кроку в CI/CD. Він просто називає, що саме виконується (для зручності в логах).
+        run: npm run build
+      
+
+      - name: Configure AWS Credentials  # налаштовується CLI для взамодії з AWS servis
+        uses: aws-actions/configure-aws-credentials@v4 
         with:
-          aws-region: eu-north-1
-          role-to-assume: arn:aws:iam::149591431224:role/role--is
-          role-session-name: GitHubActionsSession
+          aws-region: ${{ secrets.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          role-session-name: role--is
 
       - name: Login to Amazon ECR
-        uses: aws-actions/amazon-ecr-login@v2
+        run: aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCAUNT_ID }}.dkr.ecr.eu-north-1.amazonaws.com
 
-      - name: Build Docker image
+      - name: Build Docker image # Команда збирає Docker-образ
         run: |
-          docker build -t backend-rds ./backend_rds
-
-      - name: Tag Docker image
-        run: |
-          docker tag backend-rds:latest 149591431224.dkr.ecr.eu-north-1.amazonaws.com/backend-rds:latest
-
-      - name: Push Docker image to ECR
-        run: |
-          docker push 149591431224.dkr.ecr.eu-north-1.amazonaws.com/backend-rds:latest
+          IMAGE_TAG=${{ github.sha }}   
+          docker build -t backend-rds ./backend_rds  
+          docker tag backend-rds:latest ${{ secrets.AWS_ACCAUNT_ID }}.dkr.ecr.eu-north-1.amazonaws.com/backend-rds:$IMAGE_TAG
+          docker push ${{ secrets.AWS_ACCAUNT_ID }}.dkr.ecr.eu-north-1.amazonaws.com/backend-rds:$IMAGE_TAG=

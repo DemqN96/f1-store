@@ -25,16 +25,16 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js #Цей фрагмент — частина GitHub Actions workflow (.github/workflows/назва.yml), яка описує CI/CD-процес: що робити автоматично після певної події (наприклад, пушу в репозиторій).
-        uses: actions/setup-node@v4
-        with: 
-          node-version: 18
+      # - name: Setup Node.js #Цей фрагмент — частина GitHub Actions workflow (.github/workflows/назва.yml), яка описує CI/CD-процес: що робити автоматично після певної події (наприклад, пушу в репозиторій).
+      #   uses: actions/setup-node@v4
+      #   with: 
+      #     node-version: 18
 
-      - name: Install Dependenices # залежності 
-        run: npm install
+      # - name: Install Dependenices # залежності 
+      #   run: npm install
 
-      - name: Build the React Static App #Це опис кроку в CI/CD. Він просто називає, що саме виконується (для зручності в логах).
-        run: npm run build
+      # - name: Build the React Static App #Це опис кроку в CI/CD. Він просто називає, що саме виконується (для зручності в логах).
+      #   run: npm run build
       
 
       - name: Configure AWS Credentials  # налаштовується CLI для взамодії з AWS servis

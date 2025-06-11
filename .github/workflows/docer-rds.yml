@@ -55,7 +55,7 @@ jobs:
           docker push ${{ secrets.AWS_ACCAUNT_ID }}.dkr.ecr.eu-north-1.amazonaws.com/backend-rds:$IMAGE_TAG=
 
         env:
-      
+
           IMAGE_TAG: ${{ github.sha }}
           CONTAINER_NAME: backend_rds
 

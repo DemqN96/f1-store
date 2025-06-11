@@ -24,22 +24,18 @@ jobs:
         with:
           aws-region: ${{ secrets.AWS_REGION }}
           role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
-          role-session-name: deploy-role-session
+          role-session-name: role--is
 
       - name: Login to Amazon ECR
         run: |
-          aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | \
-          docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
+          aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
 
       - name: Build and push Docker image
-        working-directory: backend_redis
         run: |
           IMAGE_TAG=${{ github.sha }}
-          IMAGE_NAME=redis-app
-
-          docker build -t $IMAGE_NAME:$IMAGE_TAG .
-          docker tag $IMAGE_NAME:$IMAGE_TAG ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/$IMAGE_NAME:$IMAGE_TAG
-          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/$IMAGE_NAME:$IMAGE_TAG
+          docker build -t backend-redis
+          docker tag backend-redis:$IMAGE_TAG ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/:$IMAGE_TAG
+          docker push ${{ secrets.AWS_ACCAUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/backend-redis:$IMAGE_TAG
 
       - name: Deploy to EC2
         env:
@@ -47,16 +43,10 @@ jobs:
         run: |
           echo "${{ secrets.SSH_KEY }}" > ssh_key.pem
           chmod 600 ssh_key.pem
-
           ssh -o StrictHostKeyChecking=no -i ssh_key.pem ec2-user@${{ secrets.EC2_HOST_PROD }} << EOF
-            aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | \
-            docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
-
+            docker login -u AWS -p $(aws ecr get-login-password --region ${{ secrets.AWS_REGION }}) ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
             docker pull ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/redis-app:$IMAGE_TAG
-
             sed -i 's|image:.*|image: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/redis-app:$IMAGE_TAG|' docker-compose.yml
-
-            docker-compose up -d --force-recreate redis
+            docker compose up -d --force-recreate redis
           EOF
-
           rm ssh_key.pem

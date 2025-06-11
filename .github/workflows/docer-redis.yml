@@ -24,7 +24,7 @@ jobs:
         with:
           aws-region: ${{ secrets.AWS_REGION }}
           role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
-          role-session-name: deploy-redis-session
+          role-session-name: role--is
 
       - name: Login to Amazon ECR
         run: |

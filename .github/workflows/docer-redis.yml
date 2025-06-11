@@ -35,7 +35,7 @@ jobs:
           IMAGE_TAG=${{ github.sha }}
           docker build -t redis-app:$IMAGE_TAG ./backend_redis
           docker tag redis-app:$IMAGE_TAG ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/redis-app:$IMAGE_TAG
-          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/redis-app:$IMAGE_TAG
+          docker push ${{ secrets.AWS_ACCAUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/redis-app:$IMAGE_TAG
 
       - name: Deploy to EC2
         env:

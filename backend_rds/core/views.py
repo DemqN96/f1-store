@@ -20,5 +20,3 @@ def test_connection(request):
             'error': 'Database connection failed',
             'details': str(e)
         }, status=500)
-    
-    

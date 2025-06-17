@@ -1,0 +1,61 @@
+name: Deploy Redis to EC2 via ECR
+
+on:
+  push:
+    paths:
+      - 'backend_redis/**'
+    branches:
+      - main
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ secrets.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          role-session-name: role--is
+
+      - name: Login to Amazon ECR
+        run: |
+          aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
+      - name: Build and push Docker image
+        run: |
+          IMAGE_TAG=${{ github.sha }}
+          docker build -t backend-redis:$IMAGE_TAG ./backend_redis
+          docker tag backend-redis:$IMAGE_TAG ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/backend-redis:$IMAGE_TAG
+          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/backend-redis:$IMAGE_TAG
+      
+          
+      - name: Connect to EC2 
+        run: |
+          echo "${{ secrets.SSH_KEY }}" > key.pem
+          chmod 600 key.pem
+          ssh -o StrictHostKeyChecking=no -i key.pem ubuntu@${{ secrets.EC2_HOST }} << 'EOF'
+            docker pull ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/backend_redis:$IMAGE_TAG
+            sed -i '/backend_redis:/,/image:/s|image: .*|image: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/backend_redis:$IMAGE_TAG|g' docker-compose.yml
+            if [ "$(docker ps -q -f name=$CONTAINER_NAME)" ]; then
+            echo "Контейнер $CONTAINER_NAME працює. Зупиняємо..."
+             # Зупиняємо контейнер
+            docker compose stop $CONTAINER_NAME  echo "Не вдалося зупинити контейнер $CONTAINER_NAME"
+
+            else
+                echo "Контейнер $CONTAINER_NAME не запущений. Запускаємо..."
+
+                # Запускаємо контейнер
+                docker compose up -d $CONTAINER_NAME  echo "Не вдалося запустити контейнер $CONTAINER_NAME"
+            fi
+            uptime
+          EOF
+          rm key.pem
+        

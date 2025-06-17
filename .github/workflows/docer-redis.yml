@@ -43,7 +43,18 @@ jobs:
           chmod 600 key.pem
           ssh -o StrictHostKeyChecking=no -i key.pem ubuntu@${{ secrets.EC2_HOST }} << 'EOF'
             docker pull ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/backend_redis:$IMAGE_TAG
-            echo "Підключення успішне!"
+            sed -i '/backend_redis:/,/image:/s|image: .*|image: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/backend_redis:$IMAGE_TAG|g' docker-compose.yml
+            if [ "$(docker ps -q -f name=$CONTAINER_NAME)" ]; then
+            echo "Контейнер $CONTAINER_NAME працює. Зупиняємо..."
+             # Зупиняємо контейнер
+            docker compose stop $CONTAINER_NAME  echo "Не вдалося зупинити контейнер $CONTAINER_NAME"
+
+            else
+                echo "Контейнер $CONTAINER_NAME не запущений. Запускаємо..."
+
+                # Запускаємо контейнер
+                docker compose up -d $CONTAINER_NAME  echo "Не вдалося запустити контейнер $CONTAINER_NAME"
+            fi
             uptime
           EOF
           rm key.pem

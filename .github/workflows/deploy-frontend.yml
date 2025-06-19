@@ -1,4 +1,7 @@
-name: Deploy Static Frontend to S3
+
+
+
+name: Deploy Static Site to S3
 
 on:
   push:
@@ -9,26 +12,21 @@ permissions:
   contents: read
 
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout 
         uses: actions/checkout@v4
 
-      - name: Configure AWS credentials
+      - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-region: ${{ secrets.AWS_REGION }}
           role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
-          role-session-name: role--is
+          aws-region: ${{ secrets.AWS_REGION }}
 
-        
       - name: Sync static files to S3
         run: aws s3 sync ./ s3://$AWS_S3_BUCKET --delete --region $AWS_REGION
         env:
-          AWS_S3_BUCKET: my-bucket-first
-          AWS_REGION: eu-north-1
-
-
-        
+          AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}

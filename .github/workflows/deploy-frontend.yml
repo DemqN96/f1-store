@@ -23,11 +23,7 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
           role-session-name: role--is
 
+        
       - name: Sync static files to S3
-        uses: jakejarvis/s3-sync-action@v0.5.1
-        with:
-          args: --delete
-        env:
-          AWS_S3_BUCKET: ${{ secrets.S3_BUCKET_NAME }}
-          AWS_REGION: ${{ secrets.AWS_REGION }}
-          SOURCE_DIR: ./  # або ./build, якщо ти зберігаєш сайт у підпапці
+        run: aws s3 sync ./ s3://$my--bucket--first --delete --region $AWS_REGION
+        

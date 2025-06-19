@@ -20,17 +20,3 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '18'
-
-      - name: Install dependencies
-        run: npm install
-        working-directory: ./frontend
-
-      - name: Build frontend
-        run: npm run build
-        working-directory: ./frontend
-      
-      - name: Sync to S3
-        run: aws s3 sync ./frontend/build s3://my--bucket--first --delete
-
-      - name: Invalidate CloudFront cache
-        run: aws cloudfront create-invalidation --distribution-id E3OS014DPUZY6A --paths "/*"

@@ -1,7 +1,4 @@
-
-
-
-name: Deploy Static Site to S3
+name: Deploy Static front to S3
 
 on:
   push:
@@ -19,6 +16,17 @@ jobs:
       - name: Checkout 
         uses: actions/checkout@v4
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build site
+        run: npm run build
+
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -26,7 +34,7 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Sync static files to S3
-        run: aws s3 sync ./ s3://$AWS_S3_BUCKET --delete --region $AWS_REGION
+        run: aws s3 sync ./build s3://$AWS_S3_BUCKET --delete --region $AWS_REGION
         env:
           AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
           AWS_REGION: ${{ secrets.AWS_REGION }}

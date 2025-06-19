@@ -33,8 +33,8 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      # - name: Sync static files to S3
-      #   run: aws s3 sync ./build s3://$AWS_S3_BUCKET --delete --region $AWS_REGION
-      #   env:
-      #     AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
-      #     AWS_REGION: ${{ secrets.AWS_REGION }}
+      - name: Sync static files to S3
+        run: aws s3 sync ./frontend s3://$AWS_S3_BUCKET --delete --region $AWS_REGION
+        env:
+          AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}

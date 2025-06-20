@@ -7,8 +7,8 @@ on:
     paths:
       - 'backend_rds/**'
   
-  workflow_dispatch:
-
+  workflow_dispatch: # кнопка в самому гітхаб можливість руками запускати
+ 
 defaults:  #для того що б ми змінили робочу дерикторію 
   run:
      working-directory: ./backend_rds
@@ -24,18 +24,6 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-
-      # - name: Setup Node.js #Цей фрагмент — частина GitHub Actions workflow (.github/workflows/назва.yml), яка описує CI/CD-процес: що робити автоматично після певної події (наприклад, пушу в репозиторій).
-      #   uses: actions/setup-node@v4
-      #   with: 
-      #     node-version: 18
-
-      # - name: Install Dependenices # залежності 
-      #   run: npm install
-
-      # - name: Build the React Static App #Це опис кроку в CI/CD. Він просто називає, що саме виконується (для зручності в логах).
-      #   run: npm run build
-      
 
       - name: Configure AWS Credentials  # налаштовується CLI для взамодії з AWS servis
         uses: aws-actions/configure-aws-credentials@v4 
@@ -59,21 +47,13 @@ jobs:
         run: |
           echo "${{ secrets.SSH_KEY }}" > key.pem
           chmod 600 key.pem
+
           ssh -o StrictHostKeyChecking=no -i key.pem ubuntu@${{ secrets.EC2_HOST }} << 'EOF'
             cd /home/ubuntu/f1-store
             docker pull ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/backend_rds:$IMAGE_TAG
             sed -i '/backend_rds:/,/image:/s|image: .*|image: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/backend_rds:$IMAGE_TAG|g' docker-compose.yml
-            if [ "$(docker ps -q -f name=$CONTAINER_NAME)" ]; then
-            echo "Контейнер $CONTAINER_NAME працює. Зупиняємо..."
-              # Зупиняємо контейнер
-            docker compose stop $CONTAINER_NAME  echo "Не вдалося зупинити контейнер $CONTAINER_NAME"
-
-            else
-                echo "Контейнер $CONTAINER_NAME не запущений. Запускаємо..."
-
-                # Запускаємо контейнер
-                docker compose up -d $CONTAINER_NAME  echo "Не вдалося запустити контейнер $CONTAINER_NAME"
-            fi
+            docker compose down 
+            docker compose up -d
             uptime
           EOF
           rm key.pem

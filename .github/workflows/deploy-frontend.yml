@@ -27,13 +27,16 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      # - name: Sync static files to S3
-      #   run: aws s3 sync ./frontend s3://my--bucket--first --delete --region eu-north-1
+    
       - name: Sync static files to S3
         run: aws s3 sync ./frontend s3://$S3_BUCKET_NAME --delete --region $AWS_REGION
         env:
          S3_BUCKET_NAME: ${{ secrets.S3_BUCKET_NAME }}
          AWS_REGION: ${{ secrets.AWS_REGION }}
-    
-      - name: Notify deploy success
-        run: echo "Deploy complete!"
+     
+
+      - name: Invalidate CloudFront cache
+        run: aws cloudfront create-invalidation --distribution-id E3OS014DPUZY6A --paths "/*"
+        env:
+          AWS_REGION: eu-north-1
+      

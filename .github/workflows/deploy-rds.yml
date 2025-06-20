@@ -47,17 +47,13 @@ jobs:
       - name: Login to Amazon ECR
         run: aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.eu-north-1.amazonaws.com
 
-      - name: Build Docker image # Команда збирає Docker-образ
-        run: |
+      - name: Build Docker image # Команда збирає Docker-образ розібратись як можна скоротити IMAGE_TAG=${{ github.sha }}   
+        run: | 
           IMAGE_TAG=${{ github.sha }}   
           docker build -t backend-rds .  
           docker tag backend-rds:latest ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.eu-north-1.amazonaws.com/backend-rds:$IMAGE_TAG
           docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.eu-north-1.amazonaws.com/backend-rds:$IMAGE_TAG
 
-        env:
-
-          IMAGE_TAG: ${{ github.sha }}
-          CONTAINER_NAME: backend_rds
 
       - name: Connect to EC2 
         run: |

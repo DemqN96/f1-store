@@ -54,6 +54,7 @@ jobs:
             sed -i '/backend_rds:/,/image:/s|image: .*|image: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/backend_rds:$IMAGE_TAG|g' docker-compose.yml
             docker compose down 
             docker compose up -d
+            echo "$IMAGE_TAG" >> test.txt 
             uptime
           EOF
           rm key.pem

@@ -44,21 +44,25 @@ jobs:
 
 
       - name: Connect to EC2 
+        env:
+          IMAGE_TAG: ${{ github.sha }}
+          AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
         run: |
           echo "${{ secrets.SSH_KEY }}" > key.pem
           chmod 600 key.pem
-
-          ssh -o StrictHostKeyChecking=no -i key.pem ubuntu@${{ secrets.EC2_HOST }} << EOF
-            cd /home/ubuntu/f1-store
-            echo "IMAGE_TAG: $IMAGE_TAG"
-
-            aws ecr get-login-password --region eu-north-1 | docker login --username AWS --password-stdin 149591431224.dkr.ecr.eu-north-1.amazonaws.com
-            docker pull ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/backend_rds:$IMAGE_TAG
-            sed -i '/backend_rds:/,/image:/s|image: .*|image: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/backend_rds:$IMAGE_TAG|g' docker-compose.yml
-            docker-compose down 
-            docker-compose up -d
-            echo "$IMAGE_TAG" >> test.txt 
-            uptime
-          EOF
+      
+          ssh -o StrictHostKeyChecking=no -i key.pem ubuntu@${{ secrets.EC2_HOST }} \
+          "cd /home/ubuntu/f1-store && \
+          echo IMAGE_TAG: $IMAGE_TAG && \
+          aws ecr get-login-password --region eu-north-1 | docker login --username AWS --password-stdin 149591431224.dkr.ecr.eu-north-1.amazonaws.com && \
+          docker pull $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/backend_rds:$IMAGE_TAG && \
+          sed -i '/backend_rds:/,/image:/s|image: .*|image: '$AWS_ACCOUNT_ID'.dkr.ecr.'$AWS_REGION'.amazonaws.com/backend_rds:'$IMAGE_TAG'|g' docker-compose.yaml && \
+          docker-compose -f docker-compose.yaml down && \
+          docker-compose -f docker-compose.yaml up -d && \
+          echo $IMAGE_TAG >> test.txt && \
+          uptime"
+      
           rm key.pem
-        
+      
+      

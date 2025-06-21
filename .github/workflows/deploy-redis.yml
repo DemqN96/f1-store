@@ -46,9 +46,9 @@ jobs:
               cd /home/ubuntu/f1-store
               echo IMAGE_TAG: ${{ github.sha }}
 
-              aws ecr get-login-password --region eu-north-1 | docker login --username AWS --password-stdin 149591431224.dkr.ecr.eu-north-1.amazonaws.com
-              docker pull ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/backend_redis:$IMAGE_TAG
-              sed -i '/backend_redis:/,/image:/s|image: .*|image: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/backend-redis:$IMAGE_TAG|g' docker-compose.yml
+              aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
+              docker pull ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/backend-redis:$IMAGE_TAG
+              sed -i '/backend-redis:/,/image:/s|image: .*|image: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/backend-redis:$IMAGE_TAG|g' docker-compose.yaml
               docker-compose -f docker-compose.yaml down || true
               docker ps -a --filter 'name=f1-store_' --format '{{.ID}}' | xargs -r docker rm -f
               docker-compose -f docker-compose.yaml up -d

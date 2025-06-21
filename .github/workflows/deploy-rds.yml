@@ -45,20 +45,33 @@ jobs:
 
       - name: Connect to EC2 
         run: |
-          echo "${{ secrets.SSH_KEY }}" > key.pem
-          chmod 600 key.pem
-
-          ssh -o StrictHostKeyChecking=no -i key.pem ubuntu@${{ secrets.EC2_HOST }} << EOF
-            cd /home/ubuntu/f1-store
-            echo "IMAGE_TAG: $IMAGE_TAG"
-
-            aws ecr get-login-password --region eu-north-1 | docker login --username AWS --password-stdin 149591431224.dkr.ecr.eu-north-1.amazonaws.com
-            docker pull ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/backend-rds:$IMAGE_TAG
-            sed -i '/backend_rds:/,/image:/s|image: .*|image: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/backend_rds:$IMAGE_TAG|g' docker-compose.yml
-            docker-compose down 
-            docker-compose up -d
-            echo "$IMAGE_TAG" >> test.txt 
-            uptime
-          EOF
-          rm key.pem
+            echo "${{ secrets.SSH_KEY }}" > key.pem
+            chmod 600 key.pem
+        
+            ssh -o StrictHostKeyChecking=no -i key.pem ubuntu@${{ secrets.EC2_HOST }} "
+              cd /home/ubuntu/f1-store
+              echo IMAGE_TAG: ${{ github.sha }}
+        
+              aws ecr get-login-password --region eu-north-1 | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.eu-north-1.amazonaws.com
+        
+              # ОНОВЛЕННЯ образу
+              docker pull ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.eu-north-1.amazonaws.com/backend-rds:${{ github.sha }}
+        
+              # sed - на правильному файлі і з дефісом
+              sed -i '/backend-rds:/,/image:/s|image: .*|image: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.eu-north-1.amazonaws.com/backend-rds:${{ github.sha }}|g' docker-compose.yaml
+        
+              # Зупинка та видалення всіх контейнерів, які могли зависнути
+              docker-compose -f docker-compose.yaml down || true
+        
+              # Явно видалити "завислі" контейнери (якщо такі лишились)
+              docker ps -a --filter 'name=f1-store_' --format '{{.ID}}' | xargs -r docker rm -f
+        
+              # Тепер можна піднімати проект
+              docker-compose -f docker-compose.yaml up -d
+        
+              echo ${{ github.sha }} >> test.txt 
+              uptime
+            "
+        
+            rm key.pem
         

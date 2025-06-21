@@ -51,7 +51,7 @@ jobs:
           ssh -o StrictHostKeyChecking=no -i key.pem ubuntu@${{ secrets.EC2_HOST }} << EOF
             cd /home/ubuntu/f1-store
             aws ecr get-login-password --region eu-north-1 \
-            docker login --username AWS --password-stdin 149591431224.dkr.ecr.eu-north-1.amazonaws.com
+            | docker login --username AWS --password-stdin 149591431224.dkr.ecr.eu-north-1.amazonaws.com
             docker pull ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/backend_rds:$IMAGE_TAG
             sed -i '/backend_rds:/,/image:/s|image: .*|image: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/backend_rds:$IMAGE_TAG|g' docker-compose.yml
             docker compose down 

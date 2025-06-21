@@ -45,7 +45,7 @@ jobs:
 
       - name: Connect to EC2 
         run: |
-         echo "${{ secrets.SSH_KEY }}" > key.pemAdd commentMore actions
+         echo "${{ secrets.SSH_KEY }}" > key.pem
             chmod 600 key.pem
         
             ssh -o StrictHostKeyChecking=no -i key.pem ubuntu@${{ secrets.EC2_HOST }} "

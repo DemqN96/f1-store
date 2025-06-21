@@ -37,8 +37,8 @@ jobs:
           docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/backend-redis:$IMAGE_TAG
       
           
-          - name: Connect to EC2 
-          run: |
+      - name: Connect to EC2 
+        run: |
             echo "${{ secrets.SSH_KEY }}" > key.pem
             chmod 600 key.pem
   

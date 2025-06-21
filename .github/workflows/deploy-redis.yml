@@ -37,24 +37,34 @@ jobs:
           docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/backend-redis:$IMAGE_TAG
       
           
-      - name: Connect to EC2 
-        run: |
-            echo "${{ secrets.SSH_KEY }}" > key.pem
-            chmod 600 key.pem
-  
-            ssh -o StrictHostKeyChecking=no -i key.pem ubuntu@${{ secrets.EC2_HOST }} "
-              cd /home/ubuntu/f1-store
-              echo IMAGE_TAG: ${{ github.sha }}
-
-              aws ecr get-login-password --region eu-north-1 | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.eu-north-1.amazonaws.com
-              docker pull ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/backend-redis:$IMAGE_TAG
-              sed -i '/backend-redis:/,/image:/s|image: .*|image: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/backend-redis:$IMAGE_TAG|g' docker-compose.yaml
-              docker-compose -f docker-compose.yaml down || true
-              docker ps -a --filter 'name=f1-store_' --format '{{.ID}}' | xargs -r docker rm -f
-              docker-compose -f docker-compose.yaml up -d
-              echo ${{ github.sha }} >> test.txt 
-              uptime
-            "
-        
-            rm key.pem
-        
+          - name: Connect to EC2 
+          run: |
+           echo "${{ secrets.SSH_KEY }}" > key.pem
+              chmod 600 key.pem
+          
+              ssh -o StrictHostKeyChecking=no -i key.pem ubuntu@${{ secrets.EC2_HOST }} "
+                cd /home/ubuntu/f1-store
+                echo IMAGE_TAG: ${{ github.sha }}
+          
+                aws ecr get-login-password --region eu-north-1 | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.eu-north-1.amazonaws.com
+          
+                
+                docker pull ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.eu-north-1.amazonaws.com/backend-redis:${{ github.sha }}
+          
+                
+                sed -i '/backend-redis:/,/image:/s|image: .*|image: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.eu-north-1.amazonaws.com/backend-redis:${{ github.sha }}|g' docker-compose.yaml
+          
+                
+                docker-compose -f docker-compose.yaml down || true
+          
+                
+                docker ps -a --filter 'name=f1-store_' --format '{{.ID}}' | xargs -r docker rm -f
+          
+                
+                docker-compose -f docker-compose.yaml up -d
+          
+                echo ${{ github.sha }} >> test.txt 
+                uptime
+              "
+          
+              rm key.pem

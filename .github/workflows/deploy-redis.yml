@@ -42,17 +42,19 @@ jobs:
             echo "${{ secrets.SSH_KEY }}" > key.pem
             chmod 600 key.pem
   
-            ssh -o StrictHostKeyChecking=no -i key.pem ubuntu@${{ secrets.EC2_HOST }} << EOF
+            ssh -o StrictHostKeyChecking=no -i key.pem ubuntu@${{ secrets.EC2_HOST }} "
               cd /home/ubuntu/f1-store
-              echo "IMAGE_TAG: $IMAGE_TAG"
+              echo IMAGE_TAG: ${{ github.sha }}
 
               aws ecr get-login-password --region eu-north-1 | docker login --username AWS --password-stdin 149591431224.dkr.ecr.eu-north-1.amazonaws.com
               docker pull ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/backend_redis:$IMAGE_TAG
               sed -i '/backend_redis:/,/image:/s|image: .*|image: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/backend-redis:$IMAGE_TAG|g' docker-compose.yml
-              docker-compose down 
-              docker-compose up -d
-              echo "$IMAGE_TAG" >> test.txt 
+              docker-compose -f docker-compose.yaml down || true
+              docker ps -a --filter 'name=f1-store_' --format '{{.ID}}' | xargs -r docker rm -f
+              docker-compose -f docker-compose.yaml up -d
+              echo ${{ github.sha }} >> test.txt 
               uptime
-            EOF
+            "
+        
             rm key.pem
-          
+        
